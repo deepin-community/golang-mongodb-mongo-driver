@@ -1,0 +1,2 @@
+# False positive, these are testdata files.
+package-contains-documentation-outside-usr-share-doc [usr/share/gocode/src/go.mongodb.org/mongo-driver/testdata/*]

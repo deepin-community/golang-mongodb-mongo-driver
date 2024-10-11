@@ -1,0 +1,5 @@
+---
+Bug-Database: https://github.com/mongodb/mongo-go-driver.git/issues
+Bug-Submit: https://github.com/mongodb/mongo-go-driver.git/issues/new
+Repository: https://github.com/mongodb/mongo-go-driver.git.git
+Repository-Browse: https://github.com/mongodb/mongo-go-driver.git
