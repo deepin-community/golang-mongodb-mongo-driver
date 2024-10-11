@@ -1,4 +1,21 @@
 #!/usr/bin/make -f
 
+export DH_GOLANG_EXCLUDES := \
+	testdata/bson-corpus/bsonview \
+	testdata/server-discovery-and-monitoring/errors/generate-error-tests.py \
+	testdata/transactions/legacy/mongos-pin-auto-tests.py \
+	examples \
+	internal/test/faas \
+	mongo/integration \
+	x/mongo/driver/integration \
+	# EOL
+
 %:
-	dh $@
+	dh $@ --builddirectory=_build --buildsystem=golang
+
+override_dh_auto_test:
+	# Skip tests that require a MongoDB server, and network.
+	dh_auto_test -- -short
+
+override_dh_auto_install:
+	dh_auto_install -- --no-binaries

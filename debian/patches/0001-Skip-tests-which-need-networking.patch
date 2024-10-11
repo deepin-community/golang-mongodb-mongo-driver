@@ -1,0 +1,95 @@
+From: Shengjing Zhu <zhsj@debian.org>
+Date: Fri, 10 Nov 2023 16:39:44 +0800
+Subject: Skip tests which need networking
+
+We should not be performing external network accesses when running the
+tests, as the CI and build daemons might not permit such access.
+
+Co-Author: Guillem Jover <gjover@sipwise.com>
+---
+ mongo/options/clientoptions_test.go                 | 5 +++++
+ x/mongo/driver/connstring/connstring_spec_test.go   | 3 +++
+ x/mongo/driver/topology/polling_srv_records_test.go | 2 ++
+ x/mongo/driver/topology/server_test.go              | 3 +++
+ x/mongo/driver/topology/topology_test.go            | 4 ++++
+ 5 files changed, 17 insertions(+)
+
+diff --git a/mongo/options/clientoptions_test.go b/mongo/options/clientoptions_test.go
+index f85a112..6c01ef2 100644
+--- a/mongo/options/clientoptions_test.go
++++ b/mongo/options/clientoptions_test.go
+@@ -21,6 +21,7 @@ import (
+ 	"reflect"
+ 	"testing"
+ 	"time"
++	"strings"
+ 
+ 	"github.com/google/go-cmp/cmp"
+ 	"github.com/google/go-cmp/cmp/cmpopts"
+@@ -626,6 +627,10 @@ func TestClientOptions(t *testing.T) {
+ 
+ 		for _, tc := range testCases {
+ 			t.Run(tc.name, func(t *testing.T) {
++				if strings.HasPrefix(tc.name, "srv") && testing.Short() {
++					t.Skip("Skipping test due to network access for DNS SRV resolution")
++				}
++
+ 				result := Client().ApplyURI(tc.uri)
+ 
+ 				// Manually add the URI and ConnString to the test expectations to avoid adding them in each test
+diff --git a/x/mongo/driver/connstring/connstring_spec_test.go b/x/mongo/driver/connstring/connstring_spec_test.go
+index aea68eb..262799f 100644
+--- a/x/mongo/driver/connstring/connstring_spec_test.go
++++ b/x/mongo/driver/connstring/connstring_spec_test.go
+@@ -110,6 +110,9 @@ var skipKeywords = []string{
+ 
+ func runTest(t *testing.T, filename string, test testCase, warningsError bool) {
+ 	t.Run(filename+"/"+test.Description, func(t *testing.T) {
++		if filename == "srv-options" && testing.Short() {
++			t.Skip("Skipping test due to network access for DNS SRV resolution")
++		}
+ 		if _, skip := skipDescriptions[test.Description]; skip {
+ 			t.Skip()
+ 		}
+diff --git a/x/mongo/driver/topology/polling_srv_records_test.go b/x/mongo/driver/topology/polling_srv_records_test.go
+index 04f5e8c..569f221 100644
+--- a/x/mongo/driver/topology/polling_srv_records_test.go
++++ b/x/mongo/driver/topology/polling_srv_records_test.go
+@@ -4,6 +4,8 @@
+ // not use this file except in compliance with the License. You may obtain
+ // a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ 
++//go:build ignore
++
+ package topology
+ 
+ import (
+diff --git a/x/mongo/driver/topology/server_test.go b/x/mongo/driver/topology/server_test.go
+index 1c10d61..03d06f7 100644
+--- a/x/mongo/driver/topology/server_test.go
++++ b/x/mongo/driver/topology/server_test.go
+@@ -131,6 +131,9 @@ func TestServerHeartbeatTimeout(t *testing.T) {
+ 	if os.Getenv("DOCKER_RUNNING") != "" {
+ 		t.Skip("Skipping this test in docker.")
+ 	}
++	if testing.Short() {
++		t.Skip("Skipping test that needs MongoDB server.")
++	}
+ 
+ 	networkTimeoutError := &net.DNSError{
+ 		IsTimeout: true,
+diff --git a/x/mongo/driver/topology/topology_test.go b/x/mongo/driver/topology/topology_test.go
+index ad91d95..68c4d32 100644
+--- a/x/mongo/driver/topology/topology_test.go
++++ b/x/mongo/driver/topology/topology_test.go
+@@ -915,6 +915,10 @@ func TestTopologyConstructionLogging(t *testing.T) {
+ 			t.Run(tc.name, func(t *testing.T) {
+ 				t.Parallel()
+ 
++				if tc.name == "srv" && testing.Short() {
++					t.Skip("Skipping test due to network access for DNS SRV resolution")
++				}
++
+ 				sink := &mockLogSink{}
+ 				cfg, err := NewConfig(options.Client().ApplyURI(tc.uri).SetLoggerOptions(newLoggerOptions(sink)), nil)
+ 				require.Nil(t, err, "error constructing topology config: %v", err)

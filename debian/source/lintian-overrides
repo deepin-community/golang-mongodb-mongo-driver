@@ -1,0 +1,6 @@
+# Ignore long lines for documentation and test data.
+very-long-line-length-in-source-file * [benchmark/operation_test.go:*]
+very-long-line-length-in-source-file * [bson/testdata/fuzz/FuzzDecode/*:*]
+very-long-line-length-in-source-file * [docs/common-issues.md:*]
+very-long-line-length-in-source-file * [testdata/*.rst:*]
+very-long-line-length-in-source-file * [testdata/*.yml:*]
